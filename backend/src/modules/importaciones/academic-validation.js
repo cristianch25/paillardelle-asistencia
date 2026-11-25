@@ -11,7 +11,24 @@ export function academicKey(record) {
   const initial = /^(?:GRUPO\s+)?([45])(?:\s+ANOS)?$/.exec(raw ?? '');
   const grade = level === 'INICIAL' ? Number(initial?.[1])
     : ordinal >= 0 ? ordinal + 1 : /^[1-6]$/.test(raw ?? '') ? Number(raw) : NaN;
-  return { nivel: level, grado: Number.isInteger(grade) ? grade : null, letra: cleanText(context.seccion) };
+    const section = cleanText(context.seccion);
+  const normalized = section?.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+
+  // SIAGIE puede representar la sección como "1 A" o simplemente "A".
+  const match = /^([1-6])\s+([A-Z])$/.exec(normalized ?? '');
+
+  // Solo se extrae la letra cuando el número coincide con el grado.
+  const letter = match && Number(match[1]) === grade
+    ? match[2]
+    : normalized;
+
+  return {
+    nivel: level,
+    grado: Number.isInteger(grade) ? grade : null,
+    letra: letter
+  };
 }
 
 export function validateAcademic(row, year, section, selectedLevel, effectiveDate, access, preparingEnrollment = true) {

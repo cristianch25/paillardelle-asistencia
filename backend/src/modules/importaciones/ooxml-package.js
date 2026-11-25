@@ -177,9 +177,19 @@ export function createOoxmlPackage() {
       targets.add(rel.target);
     }
     for (const [name] of parts) {
+      // Este archivo contiene la declaración de los tipos del paquete.
+      // Ya se valida por separado y no es una hoja ni un libro de Excel.
+      if (name === '[Content_Types].xml') continue;
+
       const type = contentType(name);
-      if (type === office + 'spreadsheetml.worksheet+xml' && !targets.has(name)) throw invalidXml();
-      if (type === office + 'spreadsheetml.sheet.main+xml' && name !== 'xl/workbook.xml') throw invalidXml();
+
+      if (type === office + 'spreadsheetml.worksheet+xml' && !targets.has(name)) {
+        throw invalidXml();
+      }
+
+      if (type === office + 'spreadsheetml.sheet.main+xml' && name !== 'xl/workbook.xml') {
+        throw invalidXml();
+      }
     }
     for (const kind of ['styles', 'sharedStrings', 'calcChain']) {
       const type = REL_NS + '/' + kind;
