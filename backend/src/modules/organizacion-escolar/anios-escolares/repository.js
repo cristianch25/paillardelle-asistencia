@@ -1,6 +1,8 @@
 import { assertPasswordChanged } from '../../auth/auth.access.js';
 import { getPool } from '../../../config/database.js';
 import { inTransaction } from '../../../shared/transaction.js';
+import { updateYear } from './update.repository.js';
+import { createYearPeriodsService } from '../calendario-lectivo/year-periods.service.js';
 
 const columns = 'id, anio, fecha_inicio, fecha_fin, estado, created_at, updated_at';
 function publicRow(row) {
@@ -17,6 +19,7 @@ async function auditYear(connection, actorId, action, before, after) {
 }
 
 export function createAniosEscolaresRepository(poolProvider = getPool) {
+  const yearPeriods = createYearPeriodsService();
   function transition(id, actorId, authorize, decide, from, to, action) {
     return inTransaction(poolProvider(), async connection => {
       // Orden común con calendario: actor, año; ningún otro usuario después del año.
@@ -42,6 +45,9 @@ export function createAniosEscolaresRepository(poolProvider = getPool) {
     });
   }
   return {
+    update(id, actorId, hooks) {
+      return updateYear(poolProvider(), id, actorId, hooks, { columns, publicRow, auditYear, yearPeriods });
+    },
     open(id, actorId, authorize, decide) {
       return transition(id, actorId, authorize, decide, 'PLANIFICADO', 'ABIERTO', 'ABRIR_ANIO_ESCOLAR');
     },
@@ -67,6 +73,7 @@ export function createAniosEscolaresRepository(poolProvider = getPool) {
         if (!rows[0]) throw new Error('No se pudo consultar el año creado.');
         const year = publicRow(rows[0]);
         await auditYear(connection, actorId, 'CREAR_ANIO_ESCOLAR', null, year);
+        await yearPeriods.initialize(connection, year, actorId);
         return year;
       });
     },

@@ -4,6 +4,7 @@ import { createAniosEscolaresRepository } from './repository.js';
 import { validateNewYear, validateYearTransition } from './validation.js';
 import { unauthorized } from '../../auth/auth.errors.js';
 import { peruDate } from '../../../shared/peru-date.js';
+import { validateYearUpdate, decideYearUpdate, assertYearRelations } from './update.validation.js';
 
 function authorizeAdmin(actor) {
   if (!actor || !(actor.activo === 1 || actor.activo === true)) throw unauthorized();
@@ -30,6 +31,16 @@ function publicYear(row) {
 
 export function createAniosEscolaresService({ repository = createAniosEscolaresRepository(), now = () => new Date() } = {}) {
   return {
+    async update(id, body, actorId) {
+      validateId(id);
+      const data = validateYearUpdate(body);
+      try {
+        return publicYear(await repository.update(id, actorId, {
+          authorize: authorizeAdmin, decide: before => decideYearUpdate(before, data), assertRelations: assertYearRelations,
+          expectedPeriods: data.expected.periodos,
+        }));
+      } catch (error) { throw concurrentConflict(error); }
+    },
     async close(id, body, actorId) {
       validateId(id);
       validateYearTransition(body, 'cierre');

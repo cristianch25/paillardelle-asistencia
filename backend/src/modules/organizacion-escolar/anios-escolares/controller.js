@@ -1,5 +1,8 @@
 export function createAniosEscolaresController(service) {
   return {
+    async update(req, res) {
+      res.json({ anio_escolar: await service.update(req.params.id, req.body, req.authUser.id) });
+    },
     async close(req, res) {
       res.json({ anio_escolar: await service.close(req.params.id, req.body, req.authUser.id) });
     },

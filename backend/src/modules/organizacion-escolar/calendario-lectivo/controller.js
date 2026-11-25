@@ -1,5 +1,6 @@
 export function createCalendarController(service) {
   return {
+    async program(req, res) { res.json(await service.program(req.body, req.authUser)); },
     async listPeriods(req, res) { res.json(await service.listPeriods(req.query, req.authUser)); },
     async findPeriod(req, res) { res.json({ periodo_lectivo: await service.findPeriod(req.params.id, req.authUser) }); },
     async createPeriod(req, res) {

@@ -5,9 +5,10 @@ import { validateCalendarQuery } from './validation.js';
 import { datesInRange, effectiveDay } from './resolution.js';
 import { createPeriodOperations } from './period.service.js';
 import { createExceptionOperations } from './exception.service.js';
+import { createProgrammingService } from './programacion.service.js';
 
 export function createCalendarService({ repository = createCalendarRepository(), writer = createCalendarWriter(),
-  usuariosService, getToday } = {}) {
+  usuariosService, getToday, programmingRepository } = {}) {
   const authorize = createCalendarAccess(repository, usuariosService, getToday);
   async function list(query, actor, kind) {
     const data = validateCalendarQuery(query, kind);
@@ -18,6 +19,7 @@ export function createCalendarService({ repository = createCalendarRepository(),
       pagination: { page: data.page, limit: data.limit, has_more: rows.length > data.limit } };
   }
   return {
+    program: createProgrammingService({ repository: programmingRepository }),
     async effectiveForRange(connection, yearId, from, until, levels) {
       const { periods, exceptions } = await repository.dayForLevels(connection, yearId, from, levels, until);
       return new Map(datesInRange(from, until).map(date => [date, new Map(levels.map(level => [level,

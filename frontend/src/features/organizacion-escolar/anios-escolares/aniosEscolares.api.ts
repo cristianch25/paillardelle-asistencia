@@ -1,5 +1,10 @@
 import { httpClient } from '../../../shared/api/httpClient';
-import type { SchoolYear, SchoolYearInput, SchoolYearsResponse } from './aniosEscolares.types';
+import type { SchoolYear, SchoolYearInput, SchoolYearUpdate, SchoolYearsResponse } from './aniosEscolares.types';
+
+export async function updateSchoolYear(id: string, input: SchoolYearUpdate): Promise<SchoolYear> {
+  const { data } = await httpClient.patch<{ anio_escolar: SchoolYear }>(`/anios-escolares/${id}`, input);
+  return data.anio_escolar;
+}
 
 export async function createSchoolYear(input: SchoolYearInput): Promise<SchoolYear> {
   const { data } = await httpClient.post<{ anio_escolar: SchoolYear }>('/anios-escolares', input);

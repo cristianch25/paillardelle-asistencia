@@ -3,6 +3,7 @@ import { authenticate } from '../../../middlewares/authenticate.js';
 import { HttpError } from '../../../shared/http-error.js';
 import { createCalendarController } from './controller.js';
 import { createCalendarService } from './service.js';
+import { requireAdmin } from '../../../middlewares/require-admin.js';
 
 function roleGuard(write = false) {
   return (req, _res, next) => {
@@ -19,6 +20,7 @@ export function createCalendarRoutes(authService, service = createCalendarServic
     router.use(authenticate(authService), roleGuard());
   }
   const write = [roleGuard(true), json({ limit: '8kb' })];
+  periods.post('/programacion', requireAdmin, json({ limit: '256kb' }), controller.program);
   periods.get('/', controller.listPeriods);
   periods.get('/:id', controller.findPeriod);
   periods.post('/', ...write, controller.createPeriod);
